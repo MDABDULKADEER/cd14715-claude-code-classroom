@@ -113,6 +113,26 @@ describe('CodeReviewOrchestrator', () => {
       });
     });
 
+    it('should acquire and release the configured rate limiter', async () => {
+      queryMock.mockReturnValue(resultStream(validReport));
+
+      const rateLimiter = {
+        acquire: vi.fn().mockResolvedValue(undefined),
+        release: vi.fn(),
+      };
+
+      const orchestrator = new CodeReviewOrchestrator({
+        rateLimiter,
+        estimatedTokens: 2500,
+      });
+
+      await orchestrator.reviewPullRequest('owner', 'repo', 1);
+
+      expect(rateLimiter.acquire).toHaveBeenCalledTimes(1);
+      expect(rateLimiter.acquire).toHaveBeenCalledWith(2500);
+      expect(rateLimiter.release).toHaveBeenCalledTimes(1);
+    });
+
     it('should aggregate results into ReviewReport', async () => {
       queryMock.mockReturnValue(resultStream(validReport));
 
